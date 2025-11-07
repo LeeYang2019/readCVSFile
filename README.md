@@ -3,6 +3,7 @@
 This project turns one or more bank/exported CSV files into tidy summaries you can open in Numbers, Excel, or Google Sheets. It handles messy delimiters, mixed credits/debits, and auto-classifies transactions into custom categories.
 
 ## Features
+
 - Robust CSV ingestion (auto-detects encoding, delimiter, quote style, CR/LF issues)
 - Works with individual files or whole folders (recursive `*.csv` search)
 - Normalizes dates to `YYYY-MM-DD` and trims duplicate header rows from Numbers exports
@@ -11,6 +12,7 @@ This project turns one or more bank/exported CSV files into tidy summaries you c
 - Combined roll-up plus per-category and per-source outputs in `expenses_outputs/`
 
 ## Requirements
+
 - Python 3.8+
 - `pandas`
 
@@ -30,7 +32,7 @@ Process specific files or folders:
 python -m expenses.cli ~/Downloads/checking_export.csv ~/Desktop/Statements
 ```
 
-If you omit paths, the tool defaults to `~/Downloads/japan_trip.csv` (configurable via `--default-filename`).
+If you omit paths, the tool defaults to `~/Downloads/{default-filename}` (configurable via `--default-filename`).
 
 ### CLI options
 
@@ -46,6 +48,7 @@ options:
 ```
 
 Each processed directory/file receives its own `expenses_outputs/` folder containing:
+
 - `<name>_summary_expenses.csv`
 - `<name>_category_tables/` (detail + summary for every category)
 - `per_source_debug.csv`, `category_rule_matches.csv`, `category_rule_misses.csv`, `category_rule_summary.csv`
@@ -53,6 +56,7 @@ Each processed directory/file receives its own `expenses_outputs/` folder contai
 ### Automator integration
 
 Use `scripts/automator_runner.sh` as the body of an Automator “Run Shell Script” action (set shell to `/bin/zsh`). The script:
+
 1. Logs to `~/Downloads/ExpensesRunner.log`.
 2. Accepts drag-and-drop files/folders or prompts via a picker when nothing is provided.
 3. Invokes `python -m expenses.cli` inside this repository so the package is on `PYTHONPATH`.
