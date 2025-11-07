@@ -50,6 +50,15 @@ Each processed directory/file receives its own `expenses_outputs/` folder contai
 - `<name>_category_tables/` (detail + summary for every category)
 - `per_source_debug.csv`, `category_rule_matches.csv`, `category_rule_misses.csv`, `category_rule_summary.csv`
 
+### Automator integration
+
+Use `scripts/automator_runner.sh` as the body of an Automator “Run Shell Script” action (set shell to `/bin/zsh`). The script:
+1. Logs to `~/Downloads/ExpensesRunner.log`.
+2. Accepts drag-and-drop files/folders or prompts via a picker when nothing is provided.
+3. Invokes `python -m expenses.cli` inside this repository so the package is on `PYTHONPATH`.
+
+Adjust the `PYTHON`, `WORKDIR`, or `MODULE` variables near the top if your installation paths differ.
+
 ## Development
 
 The code is organized under the `expenses` package:
