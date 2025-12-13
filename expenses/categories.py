@@ -39,7 +39,7 @@ CATEGORY_RULES = {
     "Shopping": ["AMAZON", "TARGET", "WALMART", "BEST BUY"],
     "Humanitarian": ["GOFUNDME", "DOCTORS W/O BORDER", "ACLU", "DOCTORSWITHOUTBORDERS"],
     "Thrifting": ["St. Vincent De Paul", "SVDP", "GOODWILL", "SUPERTHRIFT"],
-    "Car Care": ["DON MILLER"],
+    "Car Care": ["DON MILLER", "MERMAID CAR WASH", "CAR WASH"],
     "Recreation": ["SMOKE", "MARIJUANA"],
     "Lodging": ["LODGING", "HOTEL", "RESORT"],
     "Travel": ["AIRLINE", "DELTA", "UNITED", "AA ", "AMERICAN AIRLINES", "SOUTHWEST", "TRAIN", "AMTRAK", "BUS"],
@@ -55,6 +55,7 @@ CATEGORY_RULES = {
 # Example: Detailed "Coffee" category gets remapped to "Household" for high-level grouping
 CATEGORY_CANON = {
     r"(?i)^\s*lodging\s*$": "Travel",
+    r"(?i)^\s*airfare\s*$": "Travel",
     r"(?i)^\s*other[_\s]*travel\s*$": "Travel",
     r"(?i)^\s*Gas[_\s]*/[_\s]*Automotive\s*$": "Travel",
     r"(?i)^\s*coffee\s*$": "Household",
@@ -64,6 +65,7 @@ CATEGORY_CANON = {
     r"(?i)^\s*Food & Dining\s*$": "Household",
     r"(?i)^\s*shopping\s*$": "Household",
     r"(?i)^\s*pharmacy\s*$": "Household",
+    r"(?i)^\s*merchandise\s*$": "Household",
 }
 
 __all__ = ["CATEGORY_RULES", "CATEGORY_CANON", "DEFAULT_DOWNLOAD_FILENAME"]
