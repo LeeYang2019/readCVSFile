@@ -247,8 +247,8 @@ def determine_detail_columns(df: pd.DataFrame, credit_col: Optional[str]) -> Lis
     
     # Preferred column order (checked in order, only includes what exists)
     preferred = [
-        "transaction_date",
         "posted_date",
+        "transaction_date",
         "date",
         "description",
         "details",

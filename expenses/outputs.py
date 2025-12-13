@@ -214,12 +214,12 @@ def write_grouped_category_outputs(base_dir: str, base_name: str, df_subset: pd.
         group_category_summary.to_csv(os.path.join(out_dir, f"{group_slug}_category_summary.csv"), index=False)
 
         # Per-group monthly by-category summary: Month × Category totals
-        # Use only the transaction date (the date the transaction occurred)
-        if "transaction_date" in df_group.columns:
+        # Use the posted date for month grouping
+        if "posted_date" in df_group.columns:
             df_group_dates = df_group.copy()
-            # Ensure transaction_date is datetime
-            df_group_dates["transaction_date"] = pd.to_datetime(df_group_dates["transaction_date"], errors="coerce")
-            df_group_dates["_year_month"] = df_group_dates["transaction_date"].dt.strftime("%Y-%m")
+            # Ensure posted_date is datetime
+            df_group_dates["posted_date"] = pd.to_datetime(df_group_dates["posted_date"], errors="coerce")
+            df_group_dates["_year_month"] = df_group_dates["posted_date"].dt.strftime("%Y-%m")
 
             monthly_cat = (
                 df_group_dates.groupby(["_year_month", "CategoryOriginal" if "CategoryOriginal" in df_group_dates.columns else "Category"], dropna=False)
@@ -271,7 +271,7 @@ def write_grouped_category_outputs(base_dir: str, base_name: str, df_subset: pd.
                             writer.writerow([r["Month"], r["Category"], int(r["count"]), float(r["total_amount"])])
             print(f"[OK] Wrote monthly-by-category summary to: {out_path}")
         else:
-            print(f"[WARN] transaction_date column not found for group '{group}'; skipping monthly breakdown")
+            print(f"[WARN] posted_date column not found for group '{group}'; skipping monthly breakdown")
 
     print(f"[OK] Wrote per-group CSVs (with totals) to: {out_dir}")
     return out_root

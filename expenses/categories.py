@@ -10,7 +10,12 @@ DEFAULT_DOWNLOAD_FILENAME = "japan_trip.csv"
 # Matches are case-insensitive and use substring matching (any keyword triggers the category)
 # Keywords are organized by intended expense category for grouping
 CATEGORY_RULES = {
+    "Car Care": ["DON MILLER", "MERMAID CAR WASH", "CAR WASH"],
     "Coffee": ["STARBUCKS", "DUNKIN", "PEETS", "COFFEE", "BARRIQUES", "KAFE"],
+    "Cash & ATM": ["WITHDRAWAL", "ATM"],
+    "Dining": ["MCDONALD", "CHIPOTLE", "SUBWAY", "GRUBHUB", "UBER EATS", "DOORDASH", "HMONG", "FOODS"],
+    "Entertainment": ["NETFLIX", "HULU", "SPOTIFY", "DISNEY", "YOUTUBE", "PRIME"],
+    "Gas/Automotive": ["ESSO", "SPEEDWAY", "KWIK", "SHELL", "CHEVRON", "BP", "MOBIL", "TEXACO", "SUNOCO", "CITGO", "OIL CHANGE", "CAR WASH", "REPAIR", "MAINTENANCE", "TIRE", "AUTO PARTS", "JIFFY LUBE", "VALVOLINE"],
     "Groceries": [
         "SAFEWAY",
         "KROGER",
@@ -22,7 +27,14 @@ CATEGORY_RULES = {
         "SAMSCLUB",
         "SAMS CLUB",
     ],
-    "Dining": ["MCDONALD", "CHIPOTLE", "SUBWAY", "GRUBHUB", "UBER EATS", "DOORDASH", "HMONG", "FOODS"],
+    "Humanitarian": ["GOFUNDME", "DOCTORS W/O BORDER", "ACLU", "DOCTORSWITHOUTBORDERS"],
+    "Lodging": ["LODGING", "HOTEL", "RESORT"],
+    "Mobile Pay": ["VENMO", "PAYPAL", "eBAY", "ZELLE"],
+    "Other_Travel": ["OTHER TRAVEL", "TRAVEL MISC"],
+    "Recreation": ["SMOKE", "MARIJUANA"],
+    "Rent": ["SHILTS"],
+    "Shopping": ["AMAZON", "TARGET", "WALMART", "BEST BUY"],
+    "Thrifting": ["St. Vincent De Paul", "SVDP", "GOODWILL", "SUPERTHRIFT"],
     "Transit": [
         "UBER",
         "LYFT",
@@ -35,19 +47,7 @@ CATEGORY_RULES = {
         "PAYGO",
         "BADGER COACHES",
     ],
-    "Entertainment": ["NETFLIX", "HULU", "SPOTIFY", "DISNEY", "YOUTUBE", "PRIME"],
-    "Shopping": ["AMAZON", "TARGET", "WALMART", "BEST BUY"],
-    "Humanitarian": ["GOFUNDME", "DOCTORS W/O BORDER", "ACLU", "DOCTORSWITHOUTBORDERS"],
-    "Thrifting": ["St. Vincent De Paul", "SVDP", "GOODWILL", "SUPERTHRIFT"],
-    "Car Care": ["DON MILLER", "MERMAID CAR WASH", "CAR WASH"],
-    "Recreation": ["SMOKE", "MARIJUANA"],
-    "Lodging": ["LODGING", "HOTEL", "RESORT"],
-    "Travel": ["AIRLINE", "DELTA", "UNITED", "AA ", "AMERICAN AIRLINES", "SOUTHWEST", "TRAIN", "AMTRAK", "BUS"],
-    "Other_Travel": ["OTHER TRAVEL", "TRAVEL MISC"],
-    "Rent": ["SHILTS"],
-    "Mobile Pay": ["VENMO", "PAYPAL", "eBAY", "ZELLE"],
-    "Cash & ATM": ["WITHDRAWAL", "ATM"],
-    "Gas / Automotive": ["ESSO", "SPEEDWAY", "KWIK", "SHELL", "CHEVRON", "BP", "MOBIL", "TEXACO", "SUNOCO", "CITGO", "OIL CHANGE", "CAR WASH", "REPAIR", "MAINTENANCE", "TIRE", "AUTO PARTS", "JIFFY LUBE", "VALVOLINE"],
+    "Airfare": ["AIRLINE", "DELTA", "UNITED", "AA ", "AMERICAN AIRLINES", "SOUTHWEST", "TRAIN", "AMTRAK", "BUS", "AMERICAN AIR"],
 }
 
 # Category name remapping: consolidates detailed categories into broader groups
