@@ -10,6 +10,12 @@ from .categories import DEFAULT_DOWNLOAD_FILENAME
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """
+    Build command-line argument parser.
+    
+    Returns:
+        ArgumentParser configured for expense processing options
+    """
     parser = argparse.ArgumentParser(
         description="Summarize expense CSV files (single file, multiple files, or directories).",
     )
@@ -33,6 +39,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """
+    CLI entry point for expense processing.
+    
+    Parses command-line arguments and runs the pipeline. Can be invoked:
+    - Directly: python -m expenses
+    - As script: python expenses/cli.py file.csv
+    - From code: main(["file.csv", "-o", "/output/dir"])
+    
+    Args:
+        argv: Command-line arguments (None = use sys.argv)
+    """
     parser = build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
     run_pipeline(args.paths, output_dir=args.output_dir, default_filename=args.default_filename)

@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+# Default filename to look for in ~/Downloads when no paths provided
+# Users can override via --default-filename CLI argument
 DEFAULT_DOWNLOAD_FILENAME = "japan_trip.csv"
 
+# Category detection rules: keywords to match in transaction descriptions
+# Matches are case-insensitive and use substring matching (any keyword triggers the category)
+# Keywords are organized by intended expense category for grouping
 CATEGORY_RULES = {
     "Coffee": ["STARBUCKS", "DUNKIN", "PEETS", "COFFEE", "BARRIQUES", "KAFE"],
     "Groceries": [
@@ -45,6 +50,9 @@ CATEGORY_RULES = {
     "Gas / Fuel": ["ESSO", "SPEEDWAY", "KWIK"],
 }
 
+# Category name remapping: consolidates detailed categories into broader groups
+# Regex patterns (case-insensitive) → remapped category name
+# Example: Detailed "Coffee" category gets remapped to "Household" for high-level grouping
 CATEGORY_CANON = {
     r"(?i)^\s*lodging\s*$": "Travel",
     r"(?i)^\s*other[_\s]*travel\s*$": "Travel",
