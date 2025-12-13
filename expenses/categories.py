@@ -47,7 +47,7 @@ CATEGORY_RULES = {
     "Rent": ["SHILTS"],
     "Mobile Pay": ["VENMO", "PAYPAL", "eBAY", "ZELLE"],
     "Cash & ATM": ["WITHDRAWAL", "ATM"],
-    "Gas / Fuel": ["ESSO", "SPEEDWAY", "KWIK"],
+    "Gas / Automotive": ["ESSO", "SPEEDWAY", "KWIK", "SHELL", "CHEVRON", "BP", "MOBIL", "TEXACO", "SUNOCO", "CITGO", "OIL CHANGE", "CAR WASH", "REPAIR", "MAINTENANCE", "TIRE", "AUTO PARTS", "JIFFY LUBE", "VALVOLINE"],
 }
 
 # Category name remapping: consolidates detailed categories into broader groups
@@ -56,7 +56,7 @@ CATEGORY_RULES = {
 CATEGORY_CANON = {
     r"(?i)^\s*lodging\s*$": "Travel",
     r"(?i)^\s*other[_\s]*travel\s*$": "Travel",
-    r"(?i)^\s*Gas[_\s]*/[_\s]*Fuel*$": "Travel",
+    r"(?i)^\s*Gas[_\s]*/[_\s]*Automotive\s*$": "Travel",
     r"(?i)^\s*coffee\s*$": "Household",
     r"(?i)^\s*dining[_\s]*out\s*$": "Household",
     r"(?i)^\s*dining\s*$": "Household",

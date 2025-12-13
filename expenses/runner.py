@@ -18,7 +18,7 @@ from .normalization import (
     normalize_headers,
     pick_col,
 )
-from .outputs import write_outputs
+from .outputs import write_outputs, write_grouped_category_outputs
 
 
 def is_csv_filename(name: str) -> bool:
@@ -380,10 +380,32 @@ def run_pipeline(
 
     # Step 7: Apply categorization rules
     cat_series, rule_matches_df, rule_misses_df, rule_summary_df = detect_or_build_category_with_debug(df, desc_col)
-    df["Category"] = cat_series
-    df["CategoryOriginal"] = df["Category"]  # Before remapping
-    df["CategoryGroup"] = df["Category"].replace(CATEGORY_CANON, regex=True)  # After remapping
-    df["CategoryGroup"] = df["CategoryGroup"].fillna(df["Category"])  # Fallback if remap didn't apply
+    # `detect_or_build_category_with_debug` returns the final remapped category (broad group).
+    # Keep that as the CategoryGroup, and reconstruct the original (detailed) category
+    # from the rule matches (and any existing category values) so per-category files
+    # continue to show the specific category names (e.g., "Gas / Automotive", "Lodging").
+    df["CategoryGroup"] = cat_series
+
+    # Start CategoryOriginal with the grouped value as a safe fallback
+    df["CategoryOriginal"] = df["CategoryGroup"].copy()
+
+    # Overwrite CategoryOriginal for rows where we have a rule match (matched_category)
+    if not rule_matches_df.empty:
+        for idx, matched in zip(rule_matches_df["row_index"].values, rule_matches_df["matched_category"].values):
+            df.at[idx, "CategoryOriginal"] = matched
+
+    # For misses, prefer any existing category value reported by the categorizer
+    if not rule_misses_df.empty and "existing_category" in rule_misses_df.columns:
+        for idx, existing_cat in zip(rule_misses_df["row_index"].values, rule_misses_df["existing_category"].values):
+            if existing_cat is not None:
+                df.at[idx, "CategoryOriginal"] = existing_cat
+
+    # Ensure no nulls; fallback to group name if nothing more specific
+    df["CategoryOriginal"] = df["CategoryOriginal"].fillna(df["CategoryGroup"]) 
+
+    # For backward compatibility with existing outputs, set `Category` to the original
+    # detailed category so per-category tables are generated per original category.
+    df["Category"] = df["CategoryOriginal"].copy()
 
     # Step 8: Select columns for output (remove internal/sensitive columns)
     # Step 8: Select columns for output (remove internal/sensitive columns)
@@ -397,15 +419,17 @@ def run_pipeline(
         # Multiple files: use timestamp to differentiate combined runs
         base_name = f"combined_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # Step 10: Write combined summary and per-category tables
-    combined_out_root = write_outputs(combined_dir, base_name, df, detail_cols)
+    # Step 10: Write combined grouped summary (acts as master summary)
+    combined_out_root = write_grouped_category_outputs(combined_dir, base_name, df, detail_cols)
+
     # Write categorization analysis files (for debugging/refining rules)
     write_debug_outputs(df, combined_out_root, rule_matches_df, rule_misses_df, rule_summary_df)
 
     # Step 11: Write per-source outputs (helpful for comparing different bank CSVs)
     for (src_dir, src_file), df_src in df.groupby(["__source_dir", "__source_file"]):
         src_base = os.path.splitext(src_file)[0]
-        write_outputs(src_dir, src_base, df_src, detail_cols)
+        # Only write grouped outputs per source (skip per-source master/category CSVs)
+        write_grouped_category_outputs(src_dir, src_base, df_src, detail_cols)
 
     return combined_out_root
 
