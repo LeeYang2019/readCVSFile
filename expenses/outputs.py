@@ -6,6 +6,7 @@ import os
 from typing import List, Dict, Tuple
 
 import pandas as pd
+import csv
 
 
 def slugify(name: str) -> str:
@@ -211,6 +212,66 @@ def write_grouped_category_outputs(base_dir: str, base_name: str, df_subset: pd.
         }
         group_category_summary = pd.concat([group_category_summary, pd.DataFrame([group_subtotal])], ignore_index=True)
         group_category_summary.to_csv(os.path.join(out_dir, f"{group_slug}_category_summary.csv"), index=False)
+
+        # Per-group monthly by-category summary: Month × Category totals
+        # Use only the transaction date (the date the transaction occurred)
+        if "transaction_date" in df_group.columns:
+            df_group_dates = df_group.copy()
+            # Ensure transaction_date is datetime
+            df_group_dates["transaction_date"] = pd.to_datetime(df_group_dates["transaction_date"], errors="coerce")
+            df_group_dates["_year_month"] = df_group_dates["transaction_date"].dt.strftime("%Y-%m")
+
+            monthly_cat = (
+                df_group_dates.groupby(["_year_month", "CategoryOriginal" if "CategoryOriginal" in df_group_dates.columns else "Category"], dropna=False)
+                .agg(count=("_signed_amount", "size"), total_amount=("_signed_amount", "sum"))
+                .reset_index()
+                .rename(columns={"_year_month": "Month"})
+                .sort_values(["Month", "total_amount"], ascending=[True, False])
+            )
+            # Normalize column name
+            month_cat_col = "CategoryOriginal" if "CategoryOriginal" in df_group_dates.columns else "Category"
+            monthly_cat = monthly_cat.rename(columns={month_cat_col: "Category"})
+
+            # Build rows grouped by month and include a __MONTH_SUBTOTAL__ row per month
+            rows = []
+            for month, mdf in monthly_cat.groupby("Month", sort=True):
+                for _, r in mdf.iterrows():
+                    rows.append({
+                        "Month": r["Month"],
+                        "Category": r["Category"],
+                        "count": int(r["count"]),
+                        "total_amount": float(r["total_amount"]),
+                    })
+                # month subtotal
+                rows.append({
+                    "Month": month,
+                    "Category": "__MONTH_SUBTOTAL__",
+                    "count": int(mdf["count"].sum()),
+                    "total_amount": float(mdf["total_amount"].sum()),
+                })
+
+            # Write CSV with one small blank-line-separated block per month.
+            out_path = os.path.join(out_dir, f"{group_slug}_monthly_category_summary.csv")
+            with open(out_path, "w", newline="") as fh:
+                writer = csv.writer(fh)
+                # Write a single top-level header once at the very top
+                writer.writerow(["Month", "Category", "count", "total_amount"])
+                # Iterate months in sorted order
+                months = sorted({r["Month"] for r in rows})
+                for i, month in enumerate(months):
+                    month_rows = [r for r in rows if r["Month"] == month]
+                    # single blank line between months (no blank line before first month)
+                    if i != 0:
+                        writer.writerow([])
+                    for r in month_rows:
+                        # For subtotal row, omit the month value (empty first cell)
+                        if r["Category"] == "__MONTH_SUBTOTAL__":
+                            writer.writerow(["", r["Category"], int(r["count"]), float(r["total_amount"])])
+                        else:
+                            writer.writerow([r["Month"], r["Category"], int(r["count"]), float(r["total_amount"])])
+            print(f"[OK] Wrote monthly-by-category summary to: {out_path}")
+        else:
+            print(f"[WARN] transaction_date column not found for group '{group}'; skipping monthly breakdown")
 
     print(f"[OK] Wrote per-group CSVs (with totals) to: {out_dir}")
     return out_root
