@@ -2,11 +2,48 @@
 
 from __future__ import annotations
 
+import re
 from typing import List, Optional, Tuple
 
 import pandas as pd
 
 from .categories import CATEGORY_RULES, CATEGORY_CANON
+
+
+# Pre-compile category patterns for efficient matching
+_COMPILED_CATEGORY_PATTERNS = {}
+_PATTERN_TO_CATEGORY = {}
+
+def _initialize_patterns():
+    """Build pre-compiled regex patterns for all categories (called once on module load)."""
+    global _COMPILED_CATEGORY_PATTERNS, _PATTERN_TO_CATEGORY
+    if _COMPILED_CATEGORY_PATTERNS:  # Already initialized
+        return
+    
+    for category, keywords in CATEGORY_RULES.items():
+        # Create a single regex pattern with alternation: keyword1|keyword2|...
+        pattern_str = "|".join(re.escape(kw) for kw in sorted(keywords, key=len, reverse=True))
+        compiled = re.compile(pattern_str, re.IGNORECASE)
+        _COMPILED_CATEGORY_PATTERNS[category] = (compiled, keywords)
+        for kw in keywords:
+            _PATTERN_TO_CATEGORY[kw] = category
+
+
+def _match_category_and_keyword(text: str) -> Tuple[Optional[str], Optional[str]]:
+    """Match text against all category patterns and return (category, matched_keyword)."""
+    if not text or not str(text).strip():
+        return None, None
+    
+    normalized = str(text).upper()
+    
+    # Try each category pattern in order
+    for category, (compiled_pattern, keywords) in _COMPILED_CATEGORY_PATTERNS.items():
+        match = compiled_pattern.search(normalized)
+        if match:
+            matched_kw = match.group(0)
+            return category, matched_kw
+    
+    return None, None
 
 
 def detect_or_build_category_with_debug(df: pd.DataFrame, desc_col: str) -> Tuple[pd.Series, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -17,6 +54,8 @@ def detect_or_build_category_with_debug(df: pd.DataFrame, desc_col: str) -> Tupl
       - DataFrame of rule misses
       - DataFrame summarizing rule hit counts/coverage
     """
+    _initialize_patterns()  # Ensure patterns are compiled
+    
     existing = None
     for candidate in ["category", "categories", "cat", "type"]:
         if candidate in df.columns:
@@ -34,32 +73,17 @@ def detect_or_build_category_with_debug(df: pd.DataFrame, desc_col: str) -> Tupl
     else:
         existing_clean = None
 
-    rule_hit_cat: List[Optional[str]] = []
-    rule_hit_kw: List[Optional[str]] = []
+    # Vectorized matching using apply instead of for loop
     desc_series = df[desc_col].astype(str)
-    for text in desc_series:
-        normalized = (text or "").upper()
-        found_cat = None
-        found_kw = None
-        if normalized:
-            for category, keywords in CATEGORY_RULES.items():
-                for keyword in keywords:
-                    if keyword in normalized:
-                        found_cat = category
-                        found_kw = keyword
-                        break
-                if found_cat:
-                    break
-        rule_hit_cat.append(found_cat)
-        rule_hit_kw.append(found_kw)
-
-    rule_cat = pd.Series(rule_hit_cat, index=df.index, dtype="object")
-    rule_kw = pd.Series(rule_hit_kw, index=df.index, dtype="object")
+    matches = desc_series.apply(lambda text: _match_category_and_keyword(text))
+    
+    rule_hit_cat = pd.Series([m[0] for m in matches], index=df.index, dtype="object")
+    rule_hit_kw = pd.Series([m[1] for m in matches], index=df.index, dtype="object")
 
     if existing_clean is not None:
-        resolved = rule_cat.where(rule_cat.notna(), existing_clean)
+        resolved = rule_hit_cat.where(rule_hit_cat.notna(), existing_clean)
     else:
-        resolved = rule_cat.copy()
+        resolved = rule_hit_cat.copy()
     resolved = resolved.fillna("Uncategorized")
     resolved = resolved.replace(CATEGORY_CANON, regex=True)
 
@@ -67,15 +91,15 @@ def detect_or_build_category_with_debug(df: pd.DataFrame, desc_col: str) -> Tupl
     src_file = df["__source_file"] if "__source_file" in df.columns else pd.Series("", index=idx)
     src_dir = df["__source_dir"] if "__source_dir" in df.columns else pd.Series("", index=idx)
 
-    match_mask = rule_cat.notna()
+    match_mask = rule_hit_cat.notna()
     matches_df = pd.DataFrame(
         {
             "__source_dir": src_dir[match_mask].values,
             "__source_file": src_file[match_mask].values,
             "row_index": idx[match_mask].values,
             "description": df[desc_col][match_mask].values,
-            "matched_category": rule_cat[match_mask].values,
-            "matched_keyword": rule_kw[match_mask].values,
+            "matched_category": rule_hit_cat[match_mask].values,
+            "matched_keyword": rule_hit_kw[match_mask].values,
             "final_category": resolved[match_mask].values,
         }
     )
@@ -99,7 +123,7 @@ def detect_or_build_category_with_debug(df: pd.DataFrame, desc_col: str) -> Tupl
         }
     )
 
-    rule_hits = rule_cat.value_counts(dropna=True).rename("rule_hits")
+    rule_hits = rule_hit_cat.value_counts(dropna=True).rename("rule_hits")
     total_rows = len(df)
     coverage = (len(matches_df) / total_rows * 100.0) if total_rows else 0.0
     all_rule_categories = pd.Index(list(CATEGORY_RULES.keys()), dtype="object")

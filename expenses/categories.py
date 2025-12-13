@@ -33,7 +33,7 @@ CATEGORY_RULES = {
     "Entertainment": ["NETFLIX", "HULU", "SPOTIFY", "DISNEY", "YOUTUBE", "PRIME"],
     "Shopping": ["AMAZON", "TARGET", "WALMART", "BEST BUY"],
     "Humanitarian": ["GOFUNDME", "DOCTORS W/O BORDER", "ACLU", "DOCTORSWITHOUTBORDERS"],
-    "Thrifting": ["St. Vincent De Paul", "SVDP", "GOODWILL"],
+    "Thrifting": ["St. Vincent De Paul", "SVDP", "GOODWILL", "SUPERTHRIFT"],
     "Car Care": ["DON MILLER"],
     "Recreation": ["SMOKE", "MARIJUANA"],
     "Lodging": ["LODGING", "HOTEL", "RESORT"],
@@ -42,7 +42,7 @@ CATEGORY_RULES = {
     "Rent": ["SHILTS"],
     "Mobile Pay": ["VENMO", "PAYPAL", "eBAY", "ZELLE"],
     "Cash & ATM": ["WITHDRAWAL", "ATM"],
-    "Gas / Fuel": ["ESSO", "SPEEDWAY"],
+    "Gas / Fuel": ["ESSO", "SPEEDWAY", "KWIK"],
 }
 
 CATEGORY_CANON = {
