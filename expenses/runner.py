@@ -295,10 +295,14 @@ def run_pipeline(
 
         write_debug_outputs(df, combined_out_root, rule_matches_df, rule_misses_df, rule_summary_df)
 
-        for (src_dir, src_file), df_src in df.groupby(["__source_dir", "__source_file"], dropna=False):
-            src_base = os.path.splitext(src_file)[0]
-            write_grouped_category_outputs(src_dir, src_base, df_src, detail_cols)
-            write_monthly_categorygroup_charts(src_dir, src_base, df_src)
+        # If only one input file, also write outputs next to that file (optional behavior).
+        # If multiple input files, skip per-file outputs and only keep the combined outputs.
+        if len(input_paths) == 1:
+            # In this case df is already just that file, but keep it explicit.
+            src_dir = os.path.dirname(input_paths[0])
+            src_base = os.path.splitext(os.path.basename(input_paths[0]))[0]
+            write_grouped_category_outputs(src_dir, src_base, df, detail_cols)
+            write_monthly_categorygroup_charts(src_dir, src_base, df)
 
         return combined_out_root
 

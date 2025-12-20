@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
-import csv
-from typing import List
+from pathlib import Path
+from typing import Iterable, List, Optional, Sequence, Union
 
 import pandas as pd
 
@@ -22,6 +22,43 @@ def slugify(name: str) -> str:
     sanitized = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in sanitized)
     sanitized = sanitized.strip("_")
     return sanitized or "uncategorized"
+
+
+def _ensure_dir(path: Union[str, os.PathLike]) -> str:
+    p = str(path)
+    os.makedirs(p, exist_ok=True)
+    return p
+
+
+def _infer_base_name_from_paths(paths: Sequence[Union[str, os.PathLike]]) -> str:
+    # Single file -> file stem; many -> combined
+    if len(paths) == 1:
+        return Path(paths[0]).stem or "expenses"
+    return "combined"
+
+
+def _load_and_combine_csvs(
+    paths: Sequence[Union[str, os.PathLike]],
+    *,
+    add_source_column: bool = True,
+) -> pd.DataFrame:
+    """
+    Reads one or more CSVs and concatenates them.
+    Assumes upstream has already produced the standardized columns you use.
+    """
+    frames: List[pd.DataFrame] = []
+    for p in paths:
+        pth = Path(p)
+        df = pd.read_csv(pth)
+        if add_source_column:
+            df["__source_file"] = pth.name
+        frames.append(df)
+
+    if not frames:
+        return pd.DataFrame()
+
+    # Combine with a fresh RangeIndex
+    return pd.concat(frames, ignore_index=True)
 
 
 def write_outputs(base_dir: str, base_name: str, df_subset: pd.DataFrame, detail_cols: List[str]) -> str:
@@ -234,19 +271,6 @@ def write_monthly_categorygroup_charts(
 
     plot_df = pivot.abs()
 
-    # # Stacked
-    # ax = plot_df.plot(kind="bar", stacked=True, figsize=(12, 6))
-    # ax.set_title("Monthly Spend by Category Group (Stacked)")
-    # ax.set_xlabel("Month")
-    # ax.set_ylabel("Total Spend ($)")
-    # plt.xticks(rotation=45, ha="right")
-    # plt.tight_layout()
-    # plt.savefig(
-    #     os.path.join(charts_dir, f"{base_name}_monthly_categorygroup_stacked.png"),
-    #     dpi=200,
-    # )
-    # plt.close()
-
     # Grouped
     ax = plot_df.plot(kind="bar", stacked=False, figsize=(12, 6))
     ax.set_title("Monthly Spend by Category Group (Grouped)")
@@ -264,9 +288,44 @@ def write_monthly_categorygroup_charts(
     return charts_dir
 
 
+def generate_outputs_for_files(
+    *,
+    base_dir: str,
+    files: Sequence[Union[str, os.PathLike]],
+    detail_cols: List[str],
+    base_name: Optional[str] = None,
+    add_source_column: bool = True,
+) -> str:
+    """
+    Orchestrates output generation for:
+      - one file  -> outputs for that file
+      - many files -> combined outputs across all files
+
+    Returns the output root directory (expenses_outputs).
+    """
+    files = list(files)
+    if not files:
+        raise ValueError("No files provided.")
+
+    base_dir = _ensure_dir(base_dir)
+    base_name = base_name or _infer_base_name_from_paths(files)
+
+    df = _load_and_combine_csvs(files, add_source_column=add_source_column)
+    if df.empty:
+        raise ValueError("No rows found after reading the provided file(s).")
+
+    # Generate outputs ONCE (single-file -> that file; multi-file -> combined)
+    out_root = write_outputs(base_dir, base_name, df, detail_cols)
+    write_grouped_category_outputs(base_dir, base_name, df, detail_cols)
+    write_monthly_categorygroup_charts(base_dir, base_name, df)
+
+    return out_root
+
+
 __all__ = [
     "slugify",
     "write_outputs",
     "write_grouped_category_outputs",
     "write_monthly_categorygroup_charts",
+    "generate_outputs_for_files",
 ]
