@@ -28,7 +28,8 @@ CATEGORY_RULES = {
         "SAMS CLUB",
         "METCALFE",
         "ORIENTAL FOOD MARKET",
-        "ASIAN MARKET"
+        "ASIAN MARKET",
+        "H MART"
     ],
     "Health Care": ["DENTISTRY"],
     "Humanitarian": ["GOFUNDME", "DOCTORS W/O BORDER", "ACLU", "DOCTORSWITHOUTBORDERS"],
