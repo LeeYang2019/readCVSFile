@@ -62,6 +62,7 @@ CATEGORY_CANON = {
     r"(?i)^\s*coffee\s*$": "Household",
     r"(?i)^\s*dining[_\s]*out\s*$": "Household",
     r"(?i)^\s*dining\s*$": "Household",
+    r"(?i)^\s*grocery\s*$": "Household",
     r"(?i)^\s*groceries\s*$": "Household",
     r"(?i)^\s*Food & Dining\s*$": "Household",
     r"(?i)^\s*shopping\s*$": "Other_Services",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import pandas as pd
 
@@ -42,10 +42,7 @@ def _load_and_combine_csvs(
     *,
     add_source_column: bool = True,
 ) -> pd.DataFrame:
-    """
-    Reads one or more CSVs and concatenates them.
-    Assumes upstream has already produced the standardized columns you use.
-    """
+    """Reads one or more CSVs and concatenates them."""
     frames: List[pd.DataFrame] = []
     for p in paths:
         pth = Path(p)
@@ -57,21 +54,26 @@ def _load_and_combine_csvs(
     if not frames:
         return pd.DataFrame()
 
-    # Combine with a fresh RangeIndex
     return pd.concat(frames, ignore_index=True)
 
 
-def write_outputs(base_dir: str, base_name: str, df_subset: pd.DataFrame, detail_cols: List[str]) -> str:
-    """
-    Write a flat master summary CSV.
-    """
+def write_outputs(
+    base_dir: str,
+    base_name: str,
+    df_subset: pd.DataFrame,
+    detail_cols: List[str],
+) -> str:
+    """Write a flat master summary CSV."""
     out_root = os.path.join(base_dir, "expenses_outputs")
     os.makedirs(out_root, exist_ok=True)
 
     if "CategoryGroup" in df_subset.columns:
         summary = (
             df_subset.groupby(["CategoryGroup", "Category", "_description_clean"], dropna=False)
-            .agg(count=("_description_clean", "count"), total_amount=("_signed_amount", "sum"))
+            .agg(
+                count=("_description_clean", "count"),
+                total_amount=("_signed_amount", "sum"),
+            )
             .reset_index()
             .rename(columns={"_description_clean": "Description"})
             .sort_values(
@@ -92,7 +94,10 @@ def write_outputs(base_dir: str, base_name: str, df_subset: pd.DataFrame, detail
     else:
         summary = (
             df_subset.groupby(["Category", "_description_clean"], dropna=False)
-            .agg(count=("_description_clean", "count"), total_amount=("_signed_amount", "sum"))
+            .agg(
+                count=("_description_clean", "count"),
+                total_amount=("_signed_amount", "sum"),
+            )
             .reset_index()
             .rename(columns={"_description_clean": "Description"})
             .sort_values(["Category", "total_amount", "Description"], ascending=[True, False, True])
@@ -121,9 +126,7 @@ def write_grouped_category_outputs(
     df_subset: pd.DataFrame,
     detail_cols: List[str],
 ) -> str:
-    """
-    Generate summaries grouped by CategoryGroup, preserving original categories.
-    """
+    """Generate summaries grouped by CategoryGroup."""
     out_root = os.path.join(base_dir, "expenses_outputs")
     os.makedirs(out_root, exist_ok=True)
 
@@ -131,12 +134,14 @@ def write_grouped_category_outputs(
         print("[WARN] CategoryGroup column not found; skipping grouped outputs")
         return out_root
 
-    # ---- Master grouped summary ----
     cat_src = "CategoryOriginal" if "CategoryOriginal" in df_subset.columns else "Category"
 
     summary = (
         df_subset.groupby(["CategoryGroup", cat_src, "_description_clean"], dropna=False)
-        .agg(count=("_description_clean", "count"), total_amount=("_signed_amount", "sum"))
+        .agg(
+            count=("_description_clean", "count"),
+            total_amount=("_signed_amount", "sum"),
+        )
         .reset_index()
         .rename(columns={cat_src: "Category", "_description_clean": "Description"})
         .sort_values(
@@ -160,7 +165,6 @@ def write_grouped_category_outputs(
     summary_with_total.to_csv(master_out, index=False)
     print(f"[OK] Wrote grouped master summary to: {master_out}")
 
-    # ---- Per-group outputs ----
     out_dir = os.path.join(out_root, f"{base_name}_grouped_tables")
     os.makedirs(out_dir, exist_ok=True)
 
@@ -171,14 +175,17 @@ def write_grouped_category_outputs(
         cols_existing = [c for c in detail_cols if c in df_group.columns]
         df_group_detail = df_group[cols_existing].copy()
 
-        # Safe CategoryOriginal → Category replacement
         if "Category" in df_group_detail.columns and "CategoryOriginal" in df_group.columns:
-            df_group_detail.loc[:, "Category"] = (
-                df_group.loc[df_group_detail.index, "CategoryOriginal"].values
-            )
+            df_group_detail.loc[:, "Category"] = df_group.loc[
+                df_group_detail.index, "CategoryOriginal"
+            ].values
 
-        # Add group total row
-        total_val = df_group_detail["_signed_amount"].sum() if "_signed_amount" in df_group_detail.columns else 0
+        total_val = (
+            df_group_detail["_signed_amount"].sum()
+            if "_signed_amount" in df_group_detail.columns
+            else 0
+        )
+
         total_row = {c: "" for c in cols_existing}
         if "description" in cols_existing:
             total_row["description"] = "__GROUP_TOTAL__"
@@ -195,10 +202,12 @@ def write_grouped_category_outputs(
             index=False,
         )
 
-        # ---- Category summary within group ----
         cat_summary = (
             df_group.groupby(cat_src, dropna=False)
-            .agg(count=("_signed_amount", "size"), total_amount=("_signed_amount", "sum"))
+            .agg(
+                count=("_signed_amount", "size"),
+                total_amount=("_signed_amount", "sum"),
+            )
             .reset_index()
             .rename(columns={cat_src: "Category"})
             .sort_values("total_amount", ascending=False)
@@ -228,7 +237,11 @@ def write_monthly_categorygroup_charts(
     df_subset: pd.DataFrame,
 ) -> str:
     """
-    Export Month × CategoryGroup totals to CSV + PNG charts.
+    Export Month × CategoryGroup totals.
+
+    Outputs:
+      - *_monthly_categorygroup_totals_long.csv  (vertical, Numbers-friendly)
+      - grouped bar chart PNG
     """
     out_root = os.path.join(base_dir, "expenses_outputs")
     os.makedirs(out_root, exist_ok=True)
@@ -242,36 +255,42 @@ def write_monthly_categorygroup_charts(
     df = df_subset.copy()
     df["posted_date"] = pd.to_datetime(df["posted_date"], errors="coerce")
     df = df.dropna(subset=["posted_date"])
-
     if df.empty:
         print("[WARN] No valid posted_date rows; skipping charts")
         return out_root
 
     df["month"] = df["posted_date"].dt.to_period("M").astype(str)
 
-    monthly = (
+    monthly_long = (
         df.groupby(["month", "CategoryGroup"], dropna=False)
         .agg(total_amount=("_signed_amount", "sum"))
         .reset_index()
-        .sort_values(["month", "CategoryGroup"])
     )
 
+    monthly_long["abs_total"] = monthly_long["total_amount"].abs()
+    monthly_long = (
+        monthly_long.sort_values(["month", "abs_total"], ascending=[True, False])
+        .drop(columns=["abs_total"])
+        .reset_index(drop=True)
+    )
+
+    long_csv_path = os.path.join(
+        out_root, f"{base_name}_monthly_categorygroup_totals_long.csv"
+    )
+    monthly_long.to_csv(long_csv_path, index=False)
+    print(f"[OK] Wrote monthly CategoryGroup totals (LONG) CSV to: {long_csv_path}")
+
+    # Chart (pivot only in-memory)
     pivot = (
-        monthly.pivot(index="month", columns="CategoryGroup", values="total_amount")
+        monthly_long.pivot(index="month", columns="CategoryGroup", values="total_amount")
         .fillna(0)
         .sort_index()
     )
-
-    csv_path = os.path.join(out_root, f"{base_name}_monthly_categorygroup_totals.csv")
-    pivot.to_csv(csv_path)
-    print(f"[OK] Wrote monthly CategoryGroup totals CSV to: {csv_path}")
 
     charts_dir = os.path.join(out_root, f"{base_name}_charts")
     os.makedirs(charts_dir, exist_ok=True)
 
     plot_df = pivot.abs()
-
-    # Grouped
     ax = plot_df.plot(kind="bar", stacked=False, figsize=(12, 6))
     ax.set_title("Monthly Spend by Category Group (Grouped)")
     ax.set_xlabel("Month")
@@ -296,13 +315,7 @@ def generate_outputs_for_files(
     base_name: Optional[str] = None,
     add_source_column: bool = True,
 ) -> str:
-    """
-    Orchestrates output generation for:
-      - one file  -> outputs for that file
-      - many files -> combined outputs across all files
-
-    Returns the output root directory (expenses_outputs).
-    """
+    """Generate outputs once for single or multiple files (combined)."""
     files = list(files)
     if not files:
         raise ValueError("No files provided.")
@@ -314,7 +327,6 @@ def generate_outputs_for_files(
     if df.empty:
         raise ValueError("No rows found after reading the provided file(s).")
 
-    # Generate outputs ONCE (single-file -> that file; multi-file -> combined)
     out_root = write_outputs(base_dir, base_name, df, detail_cols)
     write_grouped_category_outputs(base_dir, base_name, df, detail_cols)
     write_monthly_categorygroup_charts(base_dir, base_name, df)
