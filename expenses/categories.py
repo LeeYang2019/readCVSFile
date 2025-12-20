@@ -26,14 +26,18 @@ CATEGORY_RULES = {
         "METRO",
         "SAMSCLUB",
         "SAMS CLUB",
+        "METCALFE",
+        "ORIENTAL FOOD MARKET",
+        "ASIAN MARKET"
     ],
+    "Health Care": ["DENTISTRY"],
     "Humanitarian": ["GOFUNDME", "DOCTORS W/O BORDER", "ACLU", "DOCTORSWITHOUTBORDERS"],
     "Lodging": ["LODGING", "HOTEL", "RESORT"],
     "Mobile Pay": ["VENMO", "PAYPAL", "eBAY", "ZELLE"],
     "Other_Travel": ["OTHER TRAVEL", "TRAVEL MISC"],
     "Recreation": ["SMOKE", "MARIJUANA"],
     "Rent": ["SHILTS"],
-    "Shopping": ["AMAZON", "TARGET", "WALMART", "BEST BUY"],
+    "Merchandise": ["AMAZON", "TARGET", "WALMART", "BEST BUY"],
     "Thrifting": ["St. Vincent De Paul", "SVDP", "GOODWILL", "SUPERTHRIFT"],
     "Transit": [
         "UBER",
@@ -54,18 +58,23 @@ CATEGORY_RULES = {
 # Regex patterns (case-insensitive) → remapped category name
 # Example: Detailed "Coffee" category gets remapped to "Household" for high-level grouping
 CATEGORY_CANON = {
-    r"(?i)^\s*lodging\s*$": "Travel",
-    r"(?i)^\s*airfare\s*$": "Travel",
-    r"(?i)^\s*other[_\s]*travel\s*$": "Travel",
-    r"(?i)^\s*Gas[_\s]*/[_\s]*Automotive\s*$": "Travel",
+    r"(?i)^\s*AUTO[_\s]*INSURANCE\s*$": "Car Care",
     r"(?i)^\s*coffee\s*$": "Household",
     r"(?i)^\s*dining[_\s]*out\s*$": "Household",
     r"(?i)^\s*dining\s*$": "Household",
     r"(?i)^\s*groceries\s*$": "Household",
     r"(?i)^\s*Food & Dining\s*$": "Household",
-    r"(?i)^\s*shopping\s*$": "Household",
-    r"(?i)^\s*pharmacy\s*$": "Household",
-    r"(?i)^\s*merchandise\s*$": "Household",
+    r"(?i)^\s*shopping\s*$": "Other_Services",
+    r"(?i)^\s*pharmacy\s*$": "Other_Services",
+    r"(?i)^\s*merchandise\s*$": "Other_Services",
+    r"(?i)^\s*other\s*$": "Other_Services",
+    r"(?i)^\s*business[_\s]*services\s*$": "Other_Services",
+    r"(?i)^\s*lodging\s*$": "Travel",
+    r"(?i)^\s*airfare\s*$": "Travel",
+    r"(?i)^\s*other[_\s]*travel\s*$": "Travel",
+    r"(?i)^\s*Gas[_\s]*/[_\s]*Automotive\s*$": "Travel",
+    r"(?i)^\s*Gas[_\s]*/[_\s]*Fuel\s*$": "Travel",
+    r"(?i)^\s*vacation\s*$": "Travel",
 }
 
 __all__ = ["CATEGORY_RULES", "CATEGORY_CANON", "DEFAULT_DOWNLOAD_FILENAME"]
